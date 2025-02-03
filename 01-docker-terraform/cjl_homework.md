@@ -250,3 +250,24 @@ FROM trip_data
 WHERE 1=1
 ORDER BY tip_amount DESC
 ```
+
+## Terraform
+In this section homework we'll prepare the environment by creating resources in GCP with Terraform.
+
+In your VM on GCP/Laptop/GitHub Codespace install Terraform. Copy the files from the course repo here to your VM/Laptop/GitHub Codespace.
+
+Modify the files as necessary to create a GCP Bucket and Big Query Dataset.
+
+## Question 7. Terraform Workflow
+Which of the following sequences, respectively, describes the workflow for:
+
+- Downloading the provider plugins and setting up backend,
+- Generating proposed changes and auto-executing the plan
+- Remove all resources managed by `terraform`
+
+Answers:
+- terraform import, terraform apply -y, terraform destroy
+- teraform init, terraform plan -auto-apply, terraform rm
+- terraform init, terraform run -auto-approve, terraform destroy
+- **terraform init, terraform apply -auto-approve, terraform destroy**
+- terraform import, terraform apply -y, terraform rm
