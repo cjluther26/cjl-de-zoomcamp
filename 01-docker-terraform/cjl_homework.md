@@ -122,13 +122,6 @@ GROUP BY 1,trip_distance_bucket_sort
 ORDER BY trip_distance_bucket_sort
 ```
 
-"1_mile"	            104802
-"1_to_3_miles"	        198924
-"3_to_7_miles"	        109603
-"7_to_10_miles"	        27678
-"more_than_10_miles"	35189
-
-
 ## Question 4. Longest trip for each day
 Which was the pick up day with the longest trip distance? Use the pick up time for your calculations.
 
@@ -215,4 +208,45 @@ WHERE 1=1
 GROUP BY 1
 HAVING SUM(total_amount) > 13000
 ORDER BY 3 DESC
+```
+
+## Question 6. Largest tip
+For the passengers picked up in October 2019 in the zone named "East Harlem North" which was the drop off zone that had the largest tip?
+
+*Note: it's tip, not trip*
+
+We need the name of the zone, not the ID.
+- Yorkville West
+- **JFK Airport**
+- East Harlem North
+- East Harlem South
+
+
+```
+WITH trip_data AS (
+  SELECT 
+    gtt.index
+  , "VendorID" AS vendor_id
+  , TO_TIMESTAMP(lpep_pickup_datetime, 'YYYY-MM-DD HH24:MI:SS') AS lpep_pickup_datetime
+  , TO_TIMESTAMP(lpep_dropoff_datetime, 'YYYY-MM-DD HH24:MI:SS') AS lpep_dropoff_datetime
+  , tip_amount
+  , pu_zones."Borough" AS pu_borough
+  , pu_zones."Zone" AS pu_zone
+  , do_zones."Borough" AS do_borough
+  , do_zones."Zone" AS do_zone
+  FROM green_taxi_trips gtt 
+  INNER JOIN zones AS pu_zones
+    ON gtt."PULocationID" = pu_zones."LocationID"
+  LEFT JOIN zones AS do_zones
+  	ON gtt."DOLocationID" = do_zones."LocationID"
+  WHERE 1=1
+        AND TO_DATE(lpep_pickup_datetime, 'YYYY-MM-DD HH24:MI:SS') >= DATE('2019-10-01')
+		AND pu_zones."Zone" = 'East Harlem North'
+)
+
+SELECT
+  *
+FROM trip_data
+WHERE 1=1
+ORDER BY tip_amount DESC
 ```
