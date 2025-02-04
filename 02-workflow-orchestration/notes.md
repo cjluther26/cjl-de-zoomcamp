@@ -52,6 +52,60 @@ tasks:
     uri: "{{ inputs.api_url }}"
 ```
 
+#### Pass Data Between Tasks with Outputs
+We're going to GET data from a URL, save it as a CSV file (using Python), and then query it in a DuckDB instance.
+
+```
+id: getting_started_video
+namespace: dev
+
+description: | 
+  # Getting Started
+  Let's `write` some **markdown** - [first flow](https://www.youtube.com/watch?v=wUJuyUIKO3c)
+
+labels:
+  owner: cj.luther
+  project: de-zoomcamp-kestra-tutorial
+
+inputs: 
+  - id: api_url
+    type: STRING
+    defaults: https://dummyjson.com/products
+
+tasks:
+  - id: api_get
+    type: io.kestra.plugin.core.http.Request
+    uri: "{{ inputs.api_url }}"
+
+  - id: python
+    type: io.kestra.plugin.scripts.python.Script
+    containerImage: python:slim
+    beforeCommands:
+      - pip install polars
+    warningOnStdErr: false
+    outputFiles:
+      - "products.csv"
+    script: | 
+      import polars as pl
+      data = {{outputs.api_get.body | jq('.products') | first}}
+      df = pl.from_dicts(data)
+      df.glimpse()
+      df.select(['brand', 'price']).write_csv("products.csv")
+  
+  - id: sqlQuery
+    type: io.kestra.plugin.jdbc.duckdb.Query
+    inputFiles: 
+      in.csv: "{{ outputs.python.outputFiles['products.csv'] }}"
+    sql: |
+      SELECT 
+        brand
+      , ROUND(AVG(price), 2) AS avg_price
+      FROM read_csv_auto('{{ workingDir }}/in.csv', header = True)
+      GROUP BY 1
+      ORDER BY 2 DESC;
+    store: true
+```
+
 ## DE Zoomcamp 2.2.3 - ETL Pipelines with Postgres in Kestra
 
 
