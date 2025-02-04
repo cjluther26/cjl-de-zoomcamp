@@ -2,3 +2,4 @@ notes.txt
 ny_taxi_postgres_data
 *.csv
 *.csv.gz
+.env
