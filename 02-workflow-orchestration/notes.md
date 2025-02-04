@@ -106,6 +106,183 @@ tasks:
     store: true
 ```
 
+#### Schedule Your Workflows with Triggers
+```
+id: getting_started_triggers
+namespace: dev_tutorial
+
+labels:
+  owner: cj.luther
+  project: de-zoomcamp-kestra-tutorial
+
+tasks:
+  - id: hello
+    type: io.kestra.plugin.core.log.Log
+    message: Hello World! 🚀
+
+triggers:
+  - id: schedule_trigger
+    type: io.kestra.plugin.core.trigger.Schedule
+    cron: "0 0 1 * *" # Execute at At 00:00 on day-of-month 1
+
+  # Execute when the `getting started_video` flow finishes!
+  - id: flow_trigger
+    type: io.kestra.plugin.core.trigger.Flow
+    conditions: 
+      - type: io.kestra.plugin.core.condition.ExecutionFlow
+        namespace: dev
+        flowId: getting_started_video
+```
+
+#### Control Your Orchestration Logic with Flowable Tasks
+Flowable tasks allow you to do things like run things in parallel, create subflows, and create conditional branching!
+
+The flow below uses the `ForEach` flowable task type to execute of a list of tasks in parallel.
+- The `concurrencyLimit` property with value `0` makes the list of `tasks` to execute in parallel.
+- The `values` property defines the list of items to iterate over. 
+- The `tasks` property defines the list of tasks to execute for each item in the list. You can access the iteration value using the `{{ taskrun.value }}` variable.
+
+```
+id: python_partitions
+namespace: dev_tutorial
+
+description: Process partitions of data in parallel
+
+tasks:
+  - id: getPartitions
+    type: io.kestra.plugin.scripts.python.Script
+    taskRunner:
+      type: io.kestra.plugin.scripts.runner.docker.Docker
+    containerImage: ghcr.io/kestra-io/pydata:latest
+    script: |
+      from kestra import Kestra
+      partitions = [f"file_{nr}.parquet" for nr in range(1, 10)]
+      Kestra.outputs({'partitions': partitions})
+
+  - id: processPartitions
+    type: io.kestra.plugin.core.flow.ForEach
+    concurrencyLimit: 0
+    values: '{{ outputs.getPartitions.vars.partitions }}'
+    tasks:
+      - id: partition
+        type: io.kestra.plugin.scripts.python.Script
+        taskRunner:
+          type: io.kestra.plugin.scripts.runner.docker.Docker
+        containerImage: ghcr.io/kestra-io/pydata:latest
+        script: | 
+          import random
+          import time
+          from kestra import Kestra
+
+          filename = '{{ taskrun.value }}'
+          print(f"Reading and processing partition {filename}")
+          nr_rows = random.randint(1, 1000)
+          processing_time = random.randint(1, 20)
+          time.sleep(processing_time)
+          Kestra.counter('nr_rows', nr_rows, {'partition': filename})
+          Kestra.timer('processing_time', processing_time, {'partition': filename})
+```
+
+
+#### Handle Errors and Failures
+##### Error Handling
+By default, a failure of any task will stop the execution and will mark it as failed. For more control over error handling, you can add `errors` tasks, `AllowFailure` tasks, or automatic retries.
+
+`errors` allows you to execute one (or more) actions before terminating the flow (i.e. sending an email, Slack message, etc.).
+
+You can implement error handling at the `flow` or `namespace` level!
+- Flow-Level: useful for custom alerting for a specific flow/task. This is accomplished by adding `error` tasks.
+- Namespace-Level: useful for sending notificaitons for any failed execution in a given namespace. Allows for centralized error handling. 
+
+##### Flow-Level Error Handling Using `errors`
+```
+id: error_handling_flow_level
+namespace: dev_tutorial
+
+tasks:
+  - id: failure_task
+    type: io.kestra.plugin.core.execution.Fail
+
+errors:
+  - id: alert_on_failure
+    type: io.kestra.plugin.notifications.slack.SlackIncomingWebhook
+    url: "{{ secret('SLACK_WEBHOOK') }}" # https://hooks.slack.com/services/xyz/xyz/xyz
+    payload: |
+      {
+        "channel": "#alerts",
+        "text": "Failure alert for flow {{ flow.namespace }}.{{ flow.id }} with ID {{ execution.id }}"
+      }
+```
+
+
+##### Namespace-Level Error Handling Using a Flow Trigger
+Kestra recommends enabling a dedicated monitoring workflow with one of the above mentioned notification tasks (i.e. Slack, Microsoft Teams, Email) and a Flow trigger. 
+
+This example sends a Slack alert as soon as any flow in the namespace `company.analytics` is marked either as `FAILED` or `WARNING` (finishes, but with warnings). 
+
+```
+id: error_handling_namespace_level
+namespace: dev_tutorial
+
+tasks:
+  - id: send_slack_message
+    type: io.kestra.plugin.notifications.slack.SlackExecution
+    url: "{{ secret('SLACK_WEBHOOK') }}"
+    channel: "#general"
+    executionId: "{{ trigger.executionId }}"
+
+triggers:
+  - id: listen
+    type: io.kestra.plugin.core.trigger.Flow
+    conditions: 
+      - type: io.kestra.plugin.core.condition.ExecutionStatus
+        in: 
+          - FAILED
+          - WARNING
+      - type: io.kestra.plugin.core.condition.ExecutionNamespace
+        namespace: company.analytics
+        prefix: true
+```
+
+##### Retries
+###### Configuring Retries
+Each task can be retried a certain number of times, and in a specific way. Use the `retry` property to control this.
+
+The following type of retries are supported: 
+- **Constant**: the task is retried every X seconds/minutes/hours/days.
+- **Exponential**: the task is retried every X seconds/minutes/hours/days with an *exponential backoff*.
+- **Random**: the task is retried every X seconds/minutes/hours/days with a random delay in between each retry attempt.
+
+In this example, we retry a task 5 times up to 1 minute of a total task run duration, with a constant 2-second interval in between each retry attempt. 
+
+```
+id: retry_example
+namespace: dev_tutorial
+
+tasks:
+  - id: fail_four_times
+    type: io.kestra.plugin.scripts.shell.Commands
+    taskRunner: 
+      type: io.kestra.plugin.core.runner.Process
+    commands: 
+      - 'if [ "{{ taskrun.attemptsCount }}" -eq 4 ]; then exit 0; else exit 1; fi'
+    retry: 
+      type: constant
+      interval: PT2S
+      maxAttempt: 5
+      maxDuration: PT1M
+      warningOnRetry: false
+  
+errors:
+  - id: will_never_run
+    type: io.kestra.plugin.core.debug.Return
+    format: This will never be executed as retries will fix the issue. 
+```
+
+#### Manage Dependencies with Docker
+Good to go!
+
+
 ## DE Zoomcamp 2.2.3 - ETL Pipelines with Postgres in Kestra
 
 
