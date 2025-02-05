@@ -6,12 +6,12 @@
 - 364.7 MB
 - 692.6 MB
 
-I added the following task to `postgres_taxi`
-```
-  - id: file_output_size
-    type: io.kestra.plugin.core.storage.Size
-    uri: "{{ outputs.extract.outputFiles[inputs.taxi ~ '_tripdata_' ~ inputs.year ~ '-' ~ inputs.month ~ '.csv'] }}"
-```
+> I added the following task to `postgres_taxi`
+> ```
+>   - id: file_output_size
+>     type: io.kestra.plugin.core.storage.Size
+>     uri: "{{ outputs.extract.outputFiles[inputs.taxi ~ '_tripdata_' ~ inputs.year ~ '-' ~ inputs.month ~ '.csv'] }}"
+> ```
 
 2) What is the rendered value of the variable `file` when the inputs `taxi` is set to `green`, `year` is set to `2020`, and `month` is set to `04` during execution?
 - `{{inputs.taxi}}_tripdata_{{inputs.year}}-{{inputs.month}}.csv` 
