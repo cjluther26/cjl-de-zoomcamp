@@ -25,17 +25,17 @@
 - 18,324,219
 - 29,430,127
 
-After uploading the `Yellow` Taxi data for 2020 into Google BigQuery (GBQ), I ran the following SQL query:
-```
-SELECT 
-  REGEXP_EXTRACT(filename, r'\d+') AS year
-, COUNT(*) AS num_obs
-, COUNT(DISTINCT unique_row_id) AS distinct_obs
-FROM `kestra-sandbox-450014.de_zoomcamp.yellow_tripdata`
-WHERE 1=1
-      AND filename LIKE '%yellow_tripdata_2020%'
-GROUP BY 1
-```
+> After uploading the `Yellow` Taxi data for 2020 into Google BigQuery (GBQ), I ran the following SQL query:
+> ```
+> SELECT 
+>   REGEXP_EXTRACT(filename, r'\d+') AS year
+> , COUNT(*) AS num_obs
+> , COUNT(DISTINCT unique_row_id) AS distinct_obs
+> FROM `kestra-sandbox-450014.de_zoomcamp.yellow_tripdata`
+> WHERE 1=1
+>       AND filename LIKE '%yellow_tripdata_2020%'
+> GROUP BY 1
+> ```
 
 4) How many rows are there for the `Green` Taxi data for all CSV files in the year 2020?
 - 5,327,301
@@ -43,17 +43,17 @@ GROUP BY 1
 - **1,734,051**
 - 1,342,034
 
-After uploading the `Green` Taxi data for 2020 into Google BigQuery (GBQ), I ran the following SQL query:
-```
-SELECT 
-  REGEXP_EXTRACT(filename, r'\d+') AS year
-, COUNT(*) AS num_obs
-, COUNT(DISTINCT unique_row_id) AS distinct_obs
-FROM `kestra-sandbox-450014.de_zoomcamp.green_tripdata`
-WHERE 1=1
-      AND filename LIKE '%green_tripdata_2020%'
-GROUP BY 1
-```
+> After uploading the `Green` Taxi data for 2020 into Google BigQuery (GBQ), I ran the following SQL query:
+> ```
+> SELECT 
+>   REGEXP_EXTRACT(filename, r'\d+') AS year
+> , COUNT(*) AS num_obs
+> , COUNT(DISTINCT unique_row_id) AS distinct_obs
+> FROM `kestra-sandbox-450014.de_zoomcamp.green_tripdata`
+> WHERE 1=1
+>       AND filename LIKE '%green_tripdata_2020%'
+> GROUP BY 1
+> ```
 
 5) How many rows are there for the `Yellow` Taxi data for the March 2021 CSV file?
 - 1,428,092
@@ -61,11 +61,11 @@ GROUP BY 1
 - **1,925,152**
 - 2,561,031
 
-```
-SELECT 
-  COUNT(*) AS num_obs
-FROM `kestra-sandbox-450014.de_zoomcamp.yellow_tripdata_2021-03`
-```
+> ```
+> SELECT 
+>   COUNT(*) AS num_obs
+> FROM `kestra-sandbox-450014.de_zoomcamp.yellow_tripdata_2021-03`
+> ```
 
 6) How would you configure the timezone to New York in a Schedule trigger?
 - Add a `timezone` property set to `EST` in the `Schedule` trigger configuration  
@@ -73,4 +73,4 @@ FROM `kestra-sandbox-450014.de_zoomcamp.yellow_tripdata_2021-03`
 - Add a `timezone` property set to `UTC-5` in the `Schedule` trigger configuration
 - Add a `location` property set to `New_York` in the `Schedule` trigger configuration  
 
-Answer found in Kestra's (documentation)[https://kestra.io/docs/workflow-components/triggers/schedule-trigger#:~:text=A%20schedule%20that%20runs%20daily%20at%20midnight%20US%20Eastern%20time.]
+> Answer found in Kestra's (documentation)[https://kestra.io/docs/workflow-components/triggers/schedule-trigger#:~:text=A%20schedule%20that%20runs%20daily%20at%20midnight%20US%20Eastern%20time.]
