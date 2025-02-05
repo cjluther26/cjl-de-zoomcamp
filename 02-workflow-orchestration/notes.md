@@ -301,6 +301,21 @@ Good to go!
 
 
 ## DE Zoomcamp 2.2.8 - Orchestrate dbt Models with BigQuery in Kestra
-
+- Skipped this one for now, as we haven't covered dbt yet!
 
 ## DE Zoomcamp 2.2.9 - Deploy Workflows to the Cloud with Git in Kestra
+
+## DE Zoomcamp / Kestra (Additional)
+### Installing Kestra on Google Cloud VM
+I followed this (tutorial)[https://www.youtube.com/watch?v=qwA7-hm7d2o] to set up Kestra in my GCP project (`ny-rides-cjl`):
+  1. Create a VM in Google Cloud
+  2. Install Docker
+  3. Use a `docker-compose.yml` file from Kestra to download Kestra
+  4. Configure the VM's firewall s.t. a username/password would be needed to access the instance (via the External IP)
+    - Note: Pasting `{external_ip}/{port_number}` into your browser is how I could access this!
+  5. Separate the Postgres database and spin it up in Cloud SQL
+    - Selected `PostgreSQL`, named it `kestra-db`, and configured some advanced options s.t. the VM we've created could communicate with this db.
+      - Enable a private IP connection (using default features)
+      - Data Protection: turn off "Enable deletion protection" as we are *just in sandbox!*
+  6. Change the internal storage s.t. its using Google Cloud Storage
+    - *Steps 5 & 6 will allow these two things to be isolated from each other (to prevent errors) and allow us to control the size of the internal disk used for Kestra (which could help manage performance and costs).*
