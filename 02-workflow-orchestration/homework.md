@@ -74,3 +74,62 @@
 - Add a `location` property set to `New_York` in the `Schedule` trigger configuration  
 
 > Answer found in Kestra's [documentation](https://kestra.io/docs/workflow-components/triggers/schedule-trigger#:~:text=A%20schedule%20that%20runs%20daily%20at%20midnight%20US%20Eastern%20time.)
+
+
+
+
+#### Bonus
+7) To download the data from GitHub into GBQ, I wanted to take on the challenge prompted when discussing how run Kestra. The curators of the course offered two approaches -- either leverage the backfill functionality we built during the modules or **find out how to loop over the combination of `Year`-`Month` and `taxi`-type using `ForEach` task which triggers the flow for each combination using a `Subflow` task.
+
+I built a new flow -- `07_homework_gcp_taxi_subflow` -- which uses the `ForEach` task type to leverage the flow `06_gcp_taxi` we built during the modules. 
+
+This new flow works as follows:
+- For each year value in list `["2019", "2020", "2021"]`...
+    - For each month value in list `["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"]`...
+      Conduct two tasks (in parallel):
+        - `green_taxi_subflow`: gets **green** taxi data for the given `Year`-`Month` combination
+        - `yellow_taxi_subflow`: gets **yellow** taxi data for the given `Year`-`Month` combination
+*Note: I had to go and edit `06_gcp_taxi` to ensure that "2021" was a valid input for the `Year` variable!
+
+```
+id: 07_homework_gcp_taxi_subflow
+namespace: zoomcamp
+
+description: |
+  This flow moves data from CSV files in GitHub into a Google Cloud Storage (GCS) bucket, then into a Google BigQuery (GBQ) table USING A SCHEDULE.
+  The data used here can be found at the following link: https://github.com/DataTalksClub/nyc-tlc-data/releases
+
+  Its best to add a label `backfill: true` within the Kestra UI when executing backfills.
+
+labels: 
+  owner: cj.luther
+  project: zoomcamp
+
+
+tasks:
+  - id: for_each_year
+    type: io.kestra.plugin.core.flow.ForEach
+    values: '["2019", "2020", "2021"]'
+    tasks:
+      - id: for_each_month
+        type: io.kestra.plugin.core.flow.ForEach
+        values: '["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"]'
+        concurrencyLimit: 2
+        tasks:
+          - id: green_taxi_subflow
+            type: io.kestra.plugin.core.flow.Subflow
+            namespace: zoomcamp
+            flowId: 06_gcp_taxi
+            inputs:
+              taxi: "green"
+              year: "{{ parent.taskrun.value }}"
+              month: "{{ taskrun.value }}"
+          - id: yellow_taxi_subflow
+            type: io.kestra.plugin.core.flow.Subflow
+            namespace: zoomcamp
+            flowId: 06_gcp_taxi
+            inputs:
+              taxi: "yellow"
+              year: "{{ parent.taskrun.value }}"
+              month: "{{ taskrun.value }}"
+```
