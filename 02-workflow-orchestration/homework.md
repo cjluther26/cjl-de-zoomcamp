@@ -73,4 +73,4 @@
 - Add a `timezone` property set to `UTC-5` in the `Schedule` trigger configuration
 - Add a `location` property set to `New_York` in the `Schedule` trigger configuration  
 
-> Answer found in Kestra's (documentation)[https://kestra.io/docs/workflow-components/triggers/schedule-trigger#:~:text=A%20schedule%20that%20runs%20daily%20at%20midnight%20US%20Eastern%20time.]
+> Answer found in Kestra's [documentation](https://kestra.io/docs/workflow-components/triggers/schedule-trigger#:~:text=A%20schedule%20that%20runs%20daily%20at%20midnight%20US%20Eastern%20time.)
