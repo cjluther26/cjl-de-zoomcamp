@@ -140,7 +140,7 @@ The Free tier includes:
 Once demands (and model type/capability) surpasses these thresholds, you'd incur costs. 
 
 ### Example: Logistic Regression
-See `03-data-warehouse/big_query_ml.sql`
+See `03-data-warehouse/bigquery_ml.sql`
 
 ## 3.3.2 - BigQuery Machine Learning Deployment
-
+See `03-data-warehouse/extract_model.md`
