@@ -131,5 +131,16 @@ To maintain the performance of a clustered table, BigQuery performs **automatic 
 
 ## 3.3.1 - BigQuery Machine Learning
 
+### Pricing
+The Free tier includes:
+    - 10 GB / month of data storage
+    - 1 TB / month of queries processed
+    - First 10 GB / month of ML Create Model step
+
+Once demands (and model type/capability) surpasses these thresholds, you'd incur costs. 
+
+### Example: Logistic Regression
+See `03-data-warehouse/big_query_ml.sql`
+
 ## 3.3.2 - BigQuery Machine Learning Deployment
 
