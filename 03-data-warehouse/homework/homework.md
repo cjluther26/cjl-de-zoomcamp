@@ -95,11 +95,21 @@ How many records have a fare_amount of 0?
 
 ## Question 5:
 What is the best strategy to make an optimized table in Big Query if your query will always filter based on tpep_dropoff_datetime and order the results by VendorID (Create a new table with this strategy)
-- Partition by tpep_dropoff_datetime and Cluster on VendorID
+- **Partition by tpep_dropoff_datetime and Cluster on VendorID** 
 - Cluster on by tpep_dropoff_datetime and Cluster on VendorID
 - Cluster on tpep_dropoff_datetime Partition by VendorID
 - Partition by tpep_dropoff_datetime and Partition by VendorID
 
+> ```
+> CREATE OR REPLACE TABLE `kestra-sandbox-450014.nytaxi.yellow_tripdata_hw_partitioned_clustered`
+> PARTITION BY DATE(tpep_pickup_datetime)
+> CLUSTER BY VendorID
+> AS 
+>   SELECT *
+>   FROM `kestra-sandbox-450014.nytaxi.external_yellow_tripdata_hw`
+> ```
+
+We'll partition using the DATE of `tpep_pickup_datetime`, which will create more useful groupings (both in terms of analytics and in processing capabilities).
 
 ## Question 6:
 Write a query to retrieve the distinct VendorIDs between tpep_dropoff_datetime
@@ -110,9 +120,26 @@ Use the materialized table you created earlier in your from clause and note the 
 Choose the answer which most closely matches.</br> 
 
 - 12.47 MB for non-partitioned table and 326.42 MB for the partitioned table
-- 310.24 MB for non-partitioned table and 26.84 MB for the partitioned table
+- **310.24 MB for non-partitioned table and 26.84 MB for the partitioned table**
 - 5.87 MB for non-partitioned table and 0 MB for the partitioned table
 - 310.31 MB for non-partitioned table and 285.64 MB for the partitioned table
+
+> ```
+> SELECT 
+>   DISTINCT VendorID
+> FROM `kestra-sandbox-450014.nytaxi.yellow_tripdata_hw_non_partitioned`
+> WHERE 1=1
+>       AND tpep_dropoff_datetime BETWEEN '2024-03-01' AND '2024-03-15'
+> -- 337.11 MB
+> ;
+> 
+> SELECT 
+>   DISTINCT VendorID
+> FROM `kestra-sandbox-450014.nytaxi.yellow_tripdata_hw_partitioned_clustered`
+> WHERE 1=1
+>       AND tpep_dropoff_datetime BETWEEN '2024-03-01' AND '2024-03-15'
+> -- 26.86 MB
+> ```
 
 
 ## Question 7: 
@@ -120,14 +147,16 @@ Where is the data stored in the External Table you created?
 
 - Big Query
 - Container Registry
-- GCP Bucket
+- **GCP Bucket**
 - Big Table
 
 ## Question 8:
 It is best practice in Big Query to always cluster your data:
 - True
-- False
+- **False**
 
 
 ## (Bonus: Not worth points) Question 9:
 No Points: Write a `SELECT count(*)` query FROM the materialized table you created. How many bytes does it estimate will be read? Why?
+
+> It estimates **0 B**! This is because for `SELECT COUNT(*) FROM my_table` statements, BigQuery uses table metadata (which is already stored) -- with no filters or anything associated with these queries (i.e., no `WHERE` clauses or specific column selections), it has the value readily available.
