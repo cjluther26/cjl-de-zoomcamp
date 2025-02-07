@@ -3,33 +3,58 @@ namespace: zoomcamp.03-data-warehouse
 
 
 variables:
-  github_repo_url: https://github.com/DataTalksClub/data-engineering-zoomcamp
+  github_repo_url: https://github.com/cjluther26/cjl-de-zoomcamp
   gcs_bucket: "gs://{{ kv('GCP_BUCKET_NAME') }}/03-homework/"
 
 
-tasks:
-  - id: syncFiles
-    type: io.kestra.plugin.git.SyncNamespaceFiles
-    url: "{{ vars.github_repo_url }}"
-    gitDirectory: "cohorts/2025/03-data-warehouse"
-    
+tasks:  
+  - id: uploadToGCS
+    type: io.kestra.plugin.scripts.shell.Script
+    inputFiles:
+      service_account.json: "{{ kv('GCP_CREDS') }}"
+    interpreter: ["/bin/bash","-c"]
+    taskRunner:
+      type: io.kestra.plugin.core.runner.Process
+    script: | 
+      #!/bin/bash
 
-  - id: copyDataToGCS
-    type: io.kestra.plugin.gcp.gcs.Upload
-    from: "{{ vars.gcs_bucket }}"
-    to: "{{ vars.gcs_bucket }}"
+      # Set variables
+      BUCKET_NAME="{{ kv('GCP_BUCKET_NAME') }}"
+      PROJECT_ID="{{ kv('GCP_PROJECT_ID') }}"
+      BASE_URL="https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_2024-"
+      MONTHS=(01 02 03 04 05 06)
+      DOWNLOAD_DIR="."
 
 
+      # Authenticate with GCloud and set project
+      gcloud auth login --cred-file=service_account.json
+      gcloud config set project $PROJECT_ID
 
-    # - id: pythonScript
-    #   type: io.kestra.plugin.scripts.python.Commands
-    #   warningOnStdErr: false
-    #   docker:
-    #     image: ghcr.io/kestra-io/pydata:latest
-    #   beforeCommands:
-    #     - pip install -r requirements.txt > /dev/null
-    #   commands:
-    #     - python scraper.py
+      # Create the bucket if it doesn't exist
+      if ! gcloud storage buckets list --filter="name:$BUCKET_NAME" | grep $BUCKET_NAME; then
+        echo "Creating bucket: $BUCKET_NAME..."
+        gcloud storage buckets create gs://$BUCKET_NAME --location=us-east1
+      fi
+
+      # Loop through each month
+      for month in "${MONTHS[@]}"; do
+        FILE_NAME="yellow_tripdata_2024-${month}.parquet"
+        URL="${BASE_URL}${month}.parquet"
+
+        echo "Downloading $FILE_NAME..." 
+        wget -q $URL -O "${DOWNLOAD_DIR}/${FILE_NAME}" || { echo "Download failed: $FILE_NAME"; exit 1; }
+
+        echo "Uploading $FILE_NAME to GCS..."
+        gsutil cp "${DOWNLOAD_DIR}/${FILE_NAME}" gs://$BUCKET_NAME/ || { echo "Upload failed: $FILE_NAME"; exit 1; }
+
+        echo "Cleaning up $FILE_NAME..."
+        rm "${DOWNLOAD_DIR}/${FILE_NAME}"
+      
+      done
+
+      echo "✅ All files uploaded successfully!"
+
+
 
 pluginDefaults:
 - type: io.kestra.plugin.gcp
