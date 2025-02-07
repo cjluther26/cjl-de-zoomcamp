@@ -14,7 +14,11 @@ tasks:
       service_account.json: "{{ kv('GCP_CREDS') }}"
     interpreter: ["/bin/bash","-c"]
     taskRunner:
-      type: io.kestra.plugin.core.runner.Process
+      type: io.kestra.plugin.scripts.runner.docker.Docker
+    containerImage: google/cloud-sdk
+    beforeCommands:
+      - apt install wget -y
+
     script: | 
       #!/bin/bash
 
