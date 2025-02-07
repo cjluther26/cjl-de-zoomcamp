@@ -1,0 +1,46 @@
+id: gcp_kv_pairs
+namespace: zoomcamp.03-data-warehouse
+
+description:
+  This flow establishes key-value pairs for properties related to Google Cloud
+
+labels: 
+  owner: cj.luther
+  project: zoomcamp
+
+tasks: 
+  # - id: gcp_creds
+  #   type: io.kestra.plugin.core.kv.Set
+  #   key: GCP_CREDS
+  #   kvType: JSON
+  #   value: | 
+  #     {
+  #       "type": "service_account",
+  #       "project_id": "kestra-sandbox-450014",
+  #     }
+
+
+    # Note: I ran this in Kestra, but am removing the credentials here for security reasons.
+
+
+  - id: gcp_project_id 
+    type: io.kestra.plugin.core.kv.Set
+    key: GCP_PROJECT_ID
+    kvType: STRING
+    value: kestra-sandbox-450014
+
+  - id: gcp_location
+    type: io.kestra.plugin.core.kv.Set
+    key: GCP_LOCATION
+    kvType: STRING
+    value: us-east1
+
+  - id: gcp_bucket_name
+    type: io.kestra.plugin.core.kv.Set
+    key: GCP_BUCKET_NAME
+    kvType: STRING
+    value: kestra-de-zoomcamp-bucket-cjl # make sure this is globally unique!
+
+
+
+  

@@ -1,0 +1,40 @@
+id: download_taxi_data_from_github_to_gcs
+namespace: zoomcamp.03-data-warehouse
+
+
+variables:
+  github_repo_url: https://github.com/DataTalksClub/data-engineering-zoomcamp
+  gcs_bucket: "gs://{{ kv('GCP_BUCKET_NAME') }}/03-homework/"
+
+
+tasks:
+  - id: syncFiles
+    type: io.kestra.plugin.git.SyncNamespaceFiles
+    url: "{{ vars.github_repo_url }}"
+    gitDirectory: "cohorts/2025/03-data-warehouse"
+    
+
+  - id: copyDataToGCS
+    type: io.kestra.plugin.gcp.gcs.Upload
+    from: "{{ vars.gcs_bucket }}"
+    to: "{{ vars.gcs_bucket }}"
+
+
+
+    # - id: pythonScript
+    #   type: io.kestra.plugin.scripts.python.Commands
+    #   warningOnStdErr: false
+    #   docker:
+    #     image: ghcr.io/kestra-io/pydata:latest
+    #   beforeCommands:
+    #     - pip install -r requirements.txt > /dev/null
+    #   commands:
+    #     - python scraper.py
+
+pluginDefaults:
+- type: io.kestra.plugin.gcp
+  values: 
+    serviceAccount: "{{ kv('GCP_CREDS') }}"
+    projectId: "{{ kv('GCP_PROJECT_ID') }}"
+    location: "{{ kv('GCP_LOCATION') }}"
+    bucket: "{{ kv('GCP_BUCKET_NAME') }}"
