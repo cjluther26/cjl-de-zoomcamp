@@ -1,8 +1,12 @@
 
 
 # BigQuery Set-Up
-Create an external table using the Yellow Taxi Trip Records. </br>
-Create a (regular/materialized) table in BQ using the Yellow Taxi Trip Records (do not partition or cluster this table). </br>
+
+I first ran the provided Python script (`load_yellow_taxi_data.py.py`) in my Terminal. Before doing this, I added my Google Cloud Service Account to the following (local) path: `/Users/cjlut/.gcp/`. Making some modifications to the provided script, I ran the following command in Terminal (after `cd`-ing into the working directory): `python get_taxi_data.py`. This added the 6 parquet files to my GCS bucket, `kestra-de-zoomcamp-bucket-cjl`. 
+
+From there, I was able to continue, by first...
+
+...Create a (regular/materialized) table in BQ using the Yellow Taxi Trip Records (do not partition or cluster this table). </br>
 > ```
 > CREATE OR REPLACE EXTERNAL TABLE `kestra-sandbox-450014.nytaxi.external_yellow_tripdata_hw`
 > OPTIONS (
