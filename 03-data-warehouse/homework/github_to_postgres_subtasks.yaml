@@ -1,0 +1,49 @@
+id: github_to_postgres_subtasks
+namespace: zoomcamp.03-data-warehouse
+
+description: |
+  This flow moves data from CSV files in GitHub into a Postgres table, iterating over a list of year and month values. It does this for BOTH green and yellow taxis (the two variants used in the naming convention for the data files), as well as FHV!
+  The data used here can be found at the following link: https://github.com/DataTalksClub/nyc-tlc-data/releases
+
+  Its best to add a label `backfill: true` within the Kestra UI when executing backfills.
+
+labels: 
+  owner: cj.luther
+
+
+tasks:
+  - id: for_each_year
+    type: io.kestra.plugin.core.flow.ForEach
+    values: '["2019", "2020"]'
+    tasks:
+      - id: for_each_month
+        type: io.kestra.plugin.core.flow.ForEach
+        values: '["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"]'
+        concurrencyLimit: 3
+        tasks:
+          - id: green_taxi_subflow
+            type: io.kestra.plugin.core.flow.Subflow
+            namespace: zoomcamp.03-data-warehouse
+            flowId: download_taxi_data_from_github_to_postgres
+            inputs:
+              taxi: "green"
+              year: "{{ parent.taskrun.value }}"
+              month: "{{ taskrun.value }}"
+          - id: yellow_taxi_subflow
+            type: io.kestra.plugin.core.flow.Subflow
+            namespace: zoomcamp.03-data-warehouse
+            flowId: download_taxi_data_from_github_to_postgres
+            inputs:
+              taxi: "yellow"
+              year: "{{ parent.taskrun.value }}"
+              month: "{{ taskrun.value }}"
+          - id: fhv_taxi_subflow
+            type: io.kestra.plugin.core.flow.Subflow
+            namespace: zoomcamp.03-data-warehouse
+            flowId: download_taxi_data_from_github_to_postgres
+            inputs:
+              taxi: "fhv"
+              year: "{{ parent.taskrun.value }}"
+              month: "{{ taskrun.value }}"
+
+

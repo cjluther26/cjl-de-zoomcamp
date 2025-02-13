@@ -25,8 +25,10 @@ tasks:
       # Set variables
       BUCKET_NAME="{{ kv('GCP_BUCKET_NAME') }}"
       PROJECT_ID="{{ kv('GCP_PROJECT_ID') }}"
-      BASE_URL="https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_2024-"
-      MONTHS=(01 02 03 04 05 06)
+      # BASE_URL="https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_2024-"
+      # MONTHS=(01 02 03 04 05 06)
+      BASE_URL = "https://d37ci6vzurychx.cloudfront.net/trip-data/fhv_tripdata_2019-"
+      MONTHS=(01 02 03 04 05 06 07 08 09 10 11 12)
       DOWNLOAD_DIR="."
 
 
@@ -42,7 +44,8 @@ tasks:
 
       # Loop through each month
       for month in "${MONTHS[@]}"; do
-        FILE_NAME="yellow_tripdata_2024-${month}.parquet"
+        # FILE_NAME="yellow_tripdata_2024-${month}.parquet"
+        FILE_NAME="fhv_tripdata_2019-${month}.parquet"
         URL="${BASE_URL}${month}.parquet"
 
         echo "Downloading $FILE_NAME..." 
