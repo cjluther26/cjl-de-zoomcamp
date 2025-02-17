@@ -1,0 +1,16 @@
+version: 2
+
+sources:
+  - name: staging
+    # database: "ny-rides-cjl" # For BigQuery
+    # schema: "taxi_data" # For BigQuery
+
+    database: "postgres-zoomcamp-gcp" # For Postgres
+    schema: "public" # For Postgres
+
+    tables:
+      - name: green_tripdata
+      - name: yellow_tripdata
+
+
+      
