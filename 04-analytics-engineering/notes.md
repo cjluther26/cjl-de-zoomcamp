@@ -271,6 +271,48 @@ Once that is complete, run `dbt build --select +fact_trips+` to run `fact_trips`
 
 ## 4.3.2 - Testing and Documenting the Project
 
+### Tests
+Once we build models, how can we make sure they're correct?
+
+**Tests**
+- Assumptions that we make about the data
+- Essentially, these function as a `SELECT` SQL query
+    - Returning the # of failing records
+- Tests are defined on a column in the `.yml` file
+- dbt prvodies basic tests to check if the column values are:
+    - Unique
+    - Non-null
+    - Within a range of accepted values
+    - A foreign key to another table
+- Tests can also be created with custom queries.
+
+Here are a few examples of tests that live in the `.yml` file:
+- ```
+  - name: payment_type_description
+    description: Description of the payment_type code
+    tests:
+      - accepted_values:
+          values: [1, 2, 3, 4, 5]
+          severity: warn
+  ```
+
+- ```
+  - name: pickup_locationid
+    description: locationid where the meter was engaged
+    tests:
+      - relationships:
+          to: ref('taxi_zone_lookup')
+          field: locationid
+          severity: warn
+  ```
+
+#### Cross-Database Macros
+dbt offers **cross-database macros**, which essentially allow us to perform a given operation in a platform-agnostic fashion, while dbt translates the function upon build based on the database used. 
+
+For example, `dbt.date_trunc()` truncates a datetime/timestamp and is written *here* as `{{ dbt.date_trunc('month', 'pickup_datetime') }}`. The exact operation carried out upon execution depends on the platform:
+- if you're using Postgres, this is translated to `DATE_TRUNC('month', pickup_datetime)`
+- If you're using BigQuery, this is translated to `TIMESTAMP_TRUNC(CAST(pickup_datetime AS TIMESTAMP), MONTH)`
+
 ## 4.4.1 - Deployment Using dbt Cloud
 
 ## 4.4.2 - Deployment Using dbt Core (Local)
