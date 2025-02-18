@@ -313,9 +313,92 @@ For example, `dbt.date_trunc()` truncates a datetime/timestamp and is written *h
 - if you're using Postgres, this is translated to `DATE_TRUNC('month', pickup_datetime)`
 - If you're using BigQuery, this is translated to `TIMESTAMP_TRUNC(CAST(pickup_datetime AS TIMESTAMP), MONTH)`
 
+#### `codegen`
+[`codegen`](https://hub.getdbt.com/dbt-labs/codegen/latest/) is a package that helps generate dbt code necessary in building out a project, such as `generate_source()`, `generate_model_yaml()`, etc.
+
+We're using it in this module to generate model descriptions for the `schema.yml` file in the `staging` model.
+
+```
+dbt run-operation generate_model_yaml --args '{"model_names": ["stg_green_tripdata", stg_yellow_tripdata]}'
+```
+Copy and paste the output in `staging/schema.yml`.
+
+- *Note: I had to do **a ton** of `.zshrc` file configuration to get this to work, as my installation of `postgresql` from `homebrew` couldn't find `libpq.5.dylib` or `libssl.3.dylib` despite multiple installations/re-installations. Took me a bit, but with ChatGPT's help, I was able to solve this issue.*
+
+#### Now we can add tests!
+With the `models` section in our file laid out, we can start to add tests to the project.
+
+### Documentation
+**Documentation** is used by dbt to provide:
+- Information about the *project*
+    - Model code (both from the .sql file and compiled)
+    - Model dependencies
+    - Sources
+    - Auto-generated DAG from the `ref` and `source` macros
+    - Descriptions (from `.yml`)
+    - `tests`
+- Information about the *data warehouse* (i.e. `information_schema`):
+    - Column names and data types
+    - Table statistics like size and rows
+
+dbt docs can also be hosted in dbt cloud!
+
+To generate and deploy documentation, execute the following:
+1. `dbt docs generate`
+    - This compiles information about the dbt project and warehouse into `manifest.json` and `catalog.json` files, respectively
+2. Ensure that you've executed either `dbt run` or `dbt build`
+3. `dbt docs serve`
+    - For LOCAL development
+    - This uses the `.json` files above to populate a local website with the documentation.
+
+
 ## 4.4.1 - Deployment Using dbt Cloud
 
 ## 4.4.2 - Deployment Using dbt Core (Local)
+
+### What is Deployment?
+- Process of running the models created in a development environment in a production environment
+- Being able to develop while deploying later allows us to continue building models and testing them without affecting the production environment
+- A deployment environment will usualy have a different schema in the data warehouse, and ideally, a different user
+
+A development --> deployment workflow usually looks something like this:
+1. Develop in a user branch
+2. Open a PR to merge into then main branch
+3. Merge to the main branch (after peer-review)
+4. Run the new models in production, using the new version of the main branch
+5. Schedule the models
+6. Rinse and repeat!
+
+### Running a dbt Project in Production
+- dbt cloud includes a scheduler where one can create jobs to run in production
+- One single job can be configured to run multiple commands
+- Jobs can be scheduled or triggered manually
+- Each job maintains logs that document runs over time
+    - These logs maintain granularity s.t. one can look at individual commands
+- A job can also generate documentation, which would be viewed under the run information
+- If `dbt source freshness` was run, the results can be viewed at the end of the job
+
+### What is Continuous Integration (CI)?
+- **CI** is the practice of regularly merging development branches into a main branch in a repository, after which automated builds & tests are run
+- This helps reduce adding bugs to production code and maintain a more stable project
+- dbt has integrations that *enable CI on pull requests!*
+    - These are enabled via webhooks in GitHub or GitLab
+    - When a PR is ready to be merged, a webhook event is received in dbt Cloud that will enqueue a new run of the specified job
+    - The run of the CI job will used a temporary schema
+- No PR will be able to be merged unless the run has been successful!
+
+Up to now, there's only been a `dev` target available in this project. So, in my local `profiles.yml` file, I'll add a `prod` target!
+- In this example, I'm just going to change the `schema` used...but in reality, many of the configurations could change (i.e. a different `dbname`, login credentials, etc.)
+
+Once that is set up, there are now two `target` environments available: `dev` and `prod`. These can be referenced directly in the command line when running/building the dbt project. Because the default in `profiles.yml` reads as `target: dev`, the `dev` environment will be used unless specified otherwise. 
+
+To call a given environment specifically:
+- For `dev`:
+    - `dbt build -t dev`
+- For `prod`: 
+    - `dbt build -t prod`
+
+The target tag (`-t`) can be leveraged when scheduling cron jobs to run, as well. 
 
 ## 4.5.1 - Visualizing Data with Google Data Studio
 
