@@ -73,3 +73,5 @@ INNER JOIN {{ ref('dim_zones') }} AS pu_zones
 INNER JOIN {{ ref('dim_zones') }} AS do_zones
   ON trips_unioned.dropoff_locationid = do_zones.locationid AND do_zones.borough != 'Unknown'
 WHERE 1=1
+
+-- adding comment for empty commit to trigger new CI job!
