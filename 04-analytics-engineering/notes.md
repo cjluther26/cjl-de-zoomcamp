@@ -354,6 +354,10 @@ To generate and deploy documentation, execute the following:
 
 ## 4.4.1 - Deployment Using dbt Cloud
 
+### CI Jobs
+dbt allows you to create CI jobs that run either when a **PR is opened** or a **PR is merged**. This maintains integrity of the production environment, as it runs on a temporary schema (`dbt_cloud_pr`) that is dropped after the run. 
+- The dbt command for this defaults to `dbt build --select state:modified+`, which runs any file that has been modified *and its children*. 
+
 ## 4.4.2 - Deployment Using dbt Core (Local)
 
 ### What is Deployment?
@@ -402,4 +406,34 @@ The target tag (`-t`) can be leveraged when scheduling cron jobs to run, as well
 
 ## 4.5.1 - Visualizing Data with Google Data Studio
 
+### Connecting a Data Source (BigQuery)
+Connecting a BigQuery data source in Looker Studio is pretty straightforward -- select a project / dataset / table to visualize. 
+
+**Additional Notes**
+- If the table has a partition on it (i.e. `dt`), Looker Studio will prompt you with a 'Use as date range dimension' option before creating!
+- Looker Studio infers data types and default aggregations upon connection creation, which are easy to change
+- Can create custom fields/metrics (either upon creation or later)
+
+
+
+
 ## 4.5.2 - Visualizing Data with Metabase
+Metabase has an [open-source version](https://www.metabase.com/start/oss/) with a corresponding Docker image!
+
+To get this set up, I did the following:
+1. Start the docker container that has my Postgres instance:
+    - `cd 03-data-warehouse/homework`
+    - `docker compose up -d`
+2. Pull the docker image for Metabase that aligns with my host platform (linux/arm64/v8): `docker pull --platform=linux/arm64 metabase/metabase`
+3. Run the image: `docker run -d -p 3000:3000 --name metabase metabase/metabase`
+4. Go to `localhost:3000`
+5. Configure the Metabase connection:
+    - Database type: PostgreSQL
+    - Host: `host.docker.internal` (because, as currently configured, Metabase is running on a different network than the Postgres instance!)
+    - Port: `5432`
+    - Database name: `postgres-zoomcamp-gcp`
+    - Username: `kestra`
+    - Password: `k3stra`
+    - Click **Save**
+
+Metabase actually looks pretty powerful, with a lot of different capabilities. I was not able to directly reproduce the examples from the module, though, given I have refrained from uploading *all of the taxi data* to my local Postgres instance in an effort to save disk space. That being said, I do understand the general functionality of the platform and feel comfortable with it, at a high-level!
