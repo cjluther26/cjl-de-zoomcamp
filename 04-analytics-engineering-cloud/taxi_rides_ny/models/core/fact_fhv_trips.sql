@@ -34,7 +34,7 @@ WITH trip_data AS (
     INNER JOIN {{ ref('dim_zones') }} AS pu_zones
       ON fhv.pickup_locationid = pu_zones.locationid AND pu_zones.borough != 'Unknown'
     INNER JOIN {{ ref('dim_zones') }} AS do_zones
-      ON fhv.pickup_locationid = do_zones.locationid AND do_zones.borough != 'Unknown'
+      ON fhv.dropoff_locationid = do_zones.locationid AND do_zones.borough != 'Unknown'
 )
 
 SELECT *

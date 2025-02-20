@@ -21,7 +21,7 @@ WITH trip_data AS (
 , renamed AS (
     SELECT 
     /* IDs */
-      {{ dbt_utils.generate_surrogate_key(['dispatching_base_num', 'pickup_datetime', 'PUlocationID']) }} AS tripid
+      {{ dbt_utils.generate_surrogate_key(['dispatching_base_num', 'pickup_datetime', 'PUlocationID', 'dropOff_datetime', 'DOlocationID']) }} AS tripid
     , dispatching_base_num
     , PUlocationID AS pickup_locationid
     , DOlocationID AS dropoff_locationid
