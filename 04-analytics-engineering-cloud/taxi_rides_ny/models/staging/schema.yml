@@ -11,6 +11,7 @@ sources:
     tables:
       - name: green_tripdata_partitioned
       - name: yellow_tripdata_partitioned
+      - name: fhv_tripdata_partitioned
 
 models:
   - name: stg_green_tripdata
@@ -207,3 +208,5 @@ models:
       - name: payment_type_description
         data_type: text
         description: ""
+
+  
