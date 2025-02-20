@@ -50,9 +50,9 @@ SELECT
 , trips_unioned.dropoff_datetime
 
 /* Date info */
-, {{ dbt.date_trunc('month', 'trips_unioned.pickup_datetime')}} AS pickup_month
-, {{ dbt.date_trunc('quarter', 'trips_unioned.pickup_datetime')}} AS pickup_quarter
-, {{ dbt.date_trunc('year', 'trips_unioned.pickup_datetime')}} AS pickup_year
+, EXTRACT(MONTH FROM trips_unioned.pickup_datetime) AS pickup_month
+, CONCAT('Q', CAST(EXTRACT(QUARTER FROM trips_unioned.pickup_datetime) AS STRING)) AS pickup_quarter
+, EXTRACT(YEAR FROM trips_unioned.pickup_datetime) AS pickup_year
 
 /* Trip Information */
 , trips_unioned.store_and_fwd_flag
