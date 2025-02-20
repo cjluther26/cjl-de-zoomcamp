@@ -32,4 +32,3 @@ WITH agg_trips AS (
 
 SELECT *
 FROM quarterly_yoy_revenue
-ORDER BY 1,2,3
