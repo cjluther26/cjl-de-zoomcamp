@@ -30,6 +30,7 @@ WITH trip_data AS (
     /* Info */
     , fhv.sr_flag
     , 'fhv' AS service_type
+    , ROW_NUMBER() OVER(PARTITION BY fhv.tripid ORDER BY fhv.pickup_datetime) AS r
     FROM {{ ref('stg_fhv_tripdata') }} fhv
     INNER JOIN {{ ref('dim_zones') }} AS pu_zones
       ON fhv.pickup_locationid = pu_zones.locationid AND pu_zones.borough != 'Unknown'
@@ -39,3 +40,5 @@ WITH trip_data AS (
 
 SELECT *
 FROM trip_data
+WHERE 1=1
+      AND r = 1
