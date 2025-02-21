@@ -89,6 +89,7 @@ It's up to you to determine which to use!
 3. To create a new dbt project:
     - Run `dbt init` and follow the prompts!
 4. Ensure that the generated `dbt_project.yml` file aligns with `profiles.yml`, aligning the profile for the newly-generated project with the project!
+    - *Note: in creating a profile in `profiles.yml`, if you want dbt to recognize docker containers that house destination databases, set `host: host.docker.internal`. This allows dbt to read the actual network/IP address of the docker container that has the destination database.*
 5. Test the connection by running `dbt debug`.
 
 ## 4.3.1 - Build First dbt Models
@@ -137,6 +138,35 @@ Beginning with our `staging` model...
 For the dbt project I am using here, I am connecting to Postgres. The Postgres instance I am using is tied to the `docker-compose.yml` file generated for the `03-data-warehouse` homework. I used Kestra flows to upload the data needed for this exercise to that database. The file can be found here: `cjl-de-zoomcamp/03-data-warehouse/homework/docker-compose.yml`. 
 
 I simply opened a new Terminal, moved into the `03-data-warehouse/homework` directory, and ran `docker compose up -d`. This spun up a docker container housing the Postgres instance with all the data I needed. I then configured the `dbt_project.yml` and `schema.yml` files **in this repo** (`04-analytics-engineering`) to align with that Postgres instance!
+
+###### Running dbt in `docker-compose.yml`
+I didn't do this, but you could also add dbt to your Docker image. Here is a configuration I found in a very basic online tutorial:
+```
+dbt:
+  image: ghcr.io/dbt-labs/dbt-postgres:1.4.7
+  command:
+  [
+    "run",
+    "--profiles-dir",
+    "/root",
+    "--project-dir",
+    "/dbt"
+  ]
+  networks:
+    - {insert_depends_on}
+  volumes: 
+    - ./taxi_rides_ny:/dbt
+    - ~/.dbt:/root 
+  depends_on:
+    - {insert_depends_on}
+  environment:
+    DBT_PROFILE: default
+    DBT_TARGET: dev
+```
+
+Let's explain that `volumes` piece:
+    - `./taxi_rides_ny:/dbt`: maps the actual dbt project (on your local machine) to the Docker container!
+    - `~/.dbt:/root`: maps our local `profiles.yml` file to the `root` of the Docker container!
 
 ### Macros
 Now, let's cover **macros** so we can implement them into our models. Macros:
