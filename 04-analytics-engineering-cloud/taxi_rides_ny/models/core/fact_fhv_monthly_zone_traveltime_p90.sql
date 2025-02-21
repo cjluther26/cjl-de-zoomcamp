@@ -44,6 +44,7 @@ WITH fhv_trips AS (
   , dropoff_locationid
   , pickup_zone
   , dropoff_zone 
+  , COUNT(1) AS num_obs
   , MIN(trip_duration_sec) AS min_trip_duration_sec
   , AVG(trip_duration_sec) AS avg_trip_duration_sec
   , ANY_VALUE(p50) AS p50
@@ -60,6 +61,7 @@ SELECT
 , pickup_month
 , pickup_zone
 , dropoff_zone 
+, num_obs
 , min_trip_duration_sec
 , avg_trip_duration_sec
 , p50
