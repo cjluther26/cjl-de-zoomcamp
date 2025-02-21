@@ -413,6 +413,7 @@ Connecting a BigQuery data source in Looker Studio is pretty straightforward -- 
 - If the table has a partition on it (i.e. `dt`), Looker Studio will prompt you with a 'Use as date range dimension' option before creating!
 - Looker Studio infers data types and default aggregations upon connection creation, which are easy to change
 - Can create custom fields/metrics (either upon creation or later)
+- Looker Studio report created in this exercise can be found [here](https://lookerstudio.google.com/reporting/3e6dfb4a-f2bc-4acd-88ee-ea1493644bc2)
 
 
 
