@@ -53,6 +53,21 @@ Once that is set up & tested, I decided to continue forward and get [PySpark](ht
 
 ## 5.3.1 - First Look at Spark / PySpark
 
+The code used to unzip the `.csv.gz` file crashed my Juypter notebook, so I ran the following code in a new Terminal (while in the directory where the `.csv.gz` file is located):
+```
+find . -name '*.csv.gz' -exec gzip -d {} \;
+```
+
+### Notes
+- Spark **does not** infer data types!
+    - Running `df.head(5)` in this example, you can see that fields like `pickup_datetime` are initially read as strings
+    - We can use `pandas` to our advantage here (create a small dataframe from the data, uses `pd.dtypes` to get data type schema, and manipulate as needed)
+        - Use `types` (`from pyspark.sql import types`) to feed schema upon reading data into a Spark dataframe (`spark.read`)
+    - Note that `int` data type takes only 4 bytes, whereas `long` data type takes 8 bytes
+- Writing to `.parquet` files
+    - `ls -lh fhvhv/2021/01/ | wc -l`: used to count the number of files in the directory after running `df.write.parquet('fhvhv/2021/01/')` on our repartitioned DataFrame
+    
+
 
 ## 5.3.2 - Spark DataFrames
 
