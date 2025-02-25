@@ -45,6 +45,11 @@ Spark can execute both batch *and* streaming jobs, but this module will focus pr
 Instead of following this video, I used the guide in the repo for [setting up Spark on MacOS](https://github.com/DataTalksClub/data-engineering-zoomcamp/blob/main/05-batch/setup/macos.md). 
 
 Once that is set up & tested, I decided to continue forward and get [PySpark](https://github.com/DataTalksClub/data-engineering-zoomcamp/blob/main/05-batch/setup/pyspark.md) set up, per the repo documentation, as well.
+- This took me well over an hour to configure. Locally, everything worked *fine*. Once I moved into this directory and set up a virtual environment, everything was messed up. 
+- The primary issue was that the Jupyter notebook continued to reference `openjdk@21`, not `openjdk@11`, despite my attempts to manually download the latter and configure my `PATH`. 
+- Through a bunch of trial and error, I was able to configure my `~/.zshrc` file correctly, create a new virtual environment (`.venv`), and get the notebook to run.
+- Wish it didn't take so long!!!
+
 
 ## 5.3.1 - First Look at Spark / PySpark
 
