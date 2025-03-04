@@ -71,6 +71,19 @@ find . -name '*.csv.gz' -exec gzip -d {} \;
 
 ## 5.3.2 - Spark DataFrames
 
+### Transformations vs. Actions
+**Transformations** are **not** executed immediately
+- Selecting columns
+- Filtering
+- Joins 
+- `.groupBy()`
+- etc.
+
+**Actions** are used to execute transformations
+- `.show()`
+- `.take()`
+- `.head()`
+- `.write()`
 
 
 ## 5.3.3 - (Optional) Preparing Yellow and Green Taxi Data
