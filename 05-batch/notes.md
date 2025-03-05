@@ -88,7 +88,15 @@ find . -name '*.csv.gz' -exec gzip -d {} \;
 
 ## 5.3.3 - (Optional) Preparing Yellow and Green Taxi Data
 
+I ran the `download_data.sh` file in Terminal as follows:
+- Yellow, 2020: `sh download_data.sh yellow 2020`
+- Yellow, 2021:` sh download_data.sh yellow 2021`
+- Green, 2020: `sh download_data.sh green 2020`
+- Green, 2021:` sh download_data.sh green 2021`
 
+Then, I executed the code in the Jupyter notebook named `05_taxi_schema.ipynb`.
+
+This set me up for the next section!
 
 ## 5.3.4 - SQL with Spark
 
