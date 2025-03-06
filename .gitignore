@@ -7,3 +7,6 @@ __pycache__
 fhvhv
 yellow_taxi
 data
+*.png
+tmp
+lib

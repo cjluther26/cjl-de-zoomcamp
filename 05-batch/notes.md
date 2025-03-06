@@ -102,22 +102,166 @@ This set me up for the next section!
 
 ## 5.4.1 - Anatomy of a Spark Cluster
 
+- In a `local` environment, we have executors that carry out jobs. To create a local cluster, 
+  we do so when establishing a Spark context (attributing `.master()` with `'local[*]'`).
+
+### Working with a real cluster
+We have Spark code on our machine. We submit it to `.master()` (which has a port attached to it, usually 4040, that we can use to see what is being executed on the cluster). 
+This provides us an entry point to a Spark cluster, and we can use the Spark **driver** and `spark-submit` to launch the application on a cluster. 
+Then, the master distributes the job across multiple **executors**, assigning them tasks as their capabilities allow (and redistribute in the instance where an executor goes down).
+Each executor pulls a partition from a DataFrame (with multiple partitions; think of each partition as a `.parquet` file!), process, and save results.
+These DataFrames / parquet files typically live in a datalake like Google Cloud Storage or Amazon Web Services S3.
+
+Previously, Hadoop and HDFS were used to store the data "within the executor", or, in other words, download the code to process data TO the machine that ALREADY has the data. 
+This was very helpful given that the application used to process data was small relative to the size of the data that needed to be processed. 
+
+But now, the common infrastructure is to have Spark clusters and the data typically live within the same data "center", which removes the need for something like Hadoop/HDFS.
+
+![Spark Cluster Anatomy (From Video)](zoomcamp_spark_cluster_anatomy.png)
+
 
 ## 5.4.2 - GroupBy in Spark
+When processing partitioned data, each executor executes a `GROUP BY` *within its own partition*. These intermediate results (let's call them "stage 1") are stored separately and combined in "stage 2".
+
+The key operation to do this in "Stage 2" is called **shuffling**. This redistributes data across executors based on grouping keys (or `JOIN` keys). 
+
+![Spark Group By Example (From Video)](zoomcamp_spark_groupby_example.png)
 
 
 ## 5.4.3 - Joins in Spark
 
+![Spark Join Example (From Video)](zoomcamp_spark_join_example.png)
+
+### Broadcast `JOIN`
+When one of the joining tables is small, each executor gets a "copy" of it to execute the `JOIN` (in memory). This eliminates the need for shuffling and is much more efficient, both in terms of computation and time!
+
 
 ## 5.5.1 - (Optional) Operations on Spark RDDs
 
+An **Resilient Distributed Dataset (RDD)** is an immutable distributed collection of elements of your data, partitioned across nodes in your cluster that can be operated in parallel.
 
+They can be leveraged with a low-level API that offers various transformations and actions. 
+
+According to [databricks](https://www.databricks.com/glossary/what-is-rdd), RDDs are especially helpful when:
+1. You want low-level transformation/actions and control over your dataset
+2. You're working with unstructured data (media streams, text streaming, etc.)
+3. You'd rather manipulate data with functional programming constructs, as opposed to domain-specific expressions
+4. Its unimportant to impose a schema, such as columnar format while processing or accessing data attributes by name/column 
+5. You can forgo some optimization and performance benefits available with DataFrames and Datasets for structured and semi-structured data.
+
+Here are some examples that fit each of these!
+
+#### Low-Level Control 
+Example: implementing *custom partitioning*:
+```
+rdd = sc.parallelize([("A", 1), ("B", 2), ("C", 3), ("D", 4)], numSlices = 2)
+partitioned_rdd = rdd.partitionBy(2) # Manually partition into 2 partitions
+print(partitioned_rdd.glom().collect()) # View data in each partition
+
+```
+
+#### Handling unstructured/semi-structured data
+Example: filtering log files for errors
+```
+rdd = sc.textFile("logs.txt") # Read unstructured text file
+error_rdd = rdd.filter(lambda line: "ERROR" in line) 
+print(error_rdd.collect())
+
+```
+
+#### Schema flexibility
+Example: processing JSONs with different structures
+```
+rdd = sc.parallelize([
+    '{"user": "Alice", "action": "click"}',
+    '{"user": "Bob", "action": "purchase", "amount": 20}',
+])
+
+import json
+parsed_rdd = rdd.map(lambda x: json.loads(x))  # Parse JSON dynamically
+print(parsed_rdd.collect())  # [{'user': 'Alice', 'action': 'click'}, {'user': 'Bob', 'action': 'purchase', 'amount': 20}]
+
+```
+
+#### Complex / stateful computations (custom aggregations)
+Example: custom word count with reduce
+```
+rdd = sc.parallelize(["apple", "banana", "apple", "orange", "banana", "banana"])
+word_count = rdd.map(lambda word: (word, 1)).reduceByKey(lambda a, b: a + b)
+print(word_count.collect()) # [('apple', 2), ('banana', 3), ('orange', 1)]
+
+```
+
+#### Functional programming (no need for SQL-like operations)
+Example: mapping and filtering without SQL
+```
+rdd = sc.parallelize([1, 2, 3, 4, 5, 6])
+filtered_rdd = rdd.filter(lambda x: x % 2 == 0) # Keep even numbers
+squared_rdd = filtered_rdd.map(lambda x: x ** 2) # Square even numbers
+print(squared_rdd.collect()) # [4, 16, 36]
+
+```
 
 ## 5.5.2 - (Optional) Spark RDD mapPartition
 
+Example: squaring numbers *in bulk* (`mapPartitions()`) vs. one element at a time (`map()`):
+```
+from pyspark.sql import SparkSession
+
+# Initialize Spark
+spark = SparkSession.builder.appName("MapPartitionsExample").getOrCreate()
+sc = spark.sparkContext  # Get the SparkContext
+
+# Create an RDD with numbers
+rdd = sc.parallelize([1, 2, 3, 4, 5, 6, 7, 8, 9, 10], numSlices=2)  # 2 partitions
+
+# Create function for mapPartitions (which must TAKE an iterator as an arg)
+def process_partition(iterator): 
+    print("Processing a partition...")
+    return (x ** 2 for x in iterator) # Square each number in the partition
+
+# Apply mapPartitions
+result_rdd = rdd.mapPartitions(process_partitions)
+
+# Collect results
+print(result_rdd.collect()) # Output: [1, 4, 9, 16, 25, 36, 49, 64, 81, 100]
+
+```
+
+A **more complex** example: opening a database/API connection ONCE per partition (as opposed to doing so for every record):
+```
+def query_database(iterator): 
+    """
+    Simulate DB connection per partition
+    """
+
+    print("Opening database connection...")
+    results = []
+    for record in iterator:
+        # Simulating DB lookup
+        results.append(f"Processed {record}")
+    
+    print("Closing database connection...")
+
+    return iter(results) # Return an iterator with results
+
+# Apply mapPartitions
+db_result_rdd = rdd.mapPartitions(query_database)
+
+# Collect and print results
+print(db_result_rdd.collect())
+```
+- This would be a **massive performance gain** when dealing with external systems (such as a database connection or API), as it only opens/closes a connection once per partition instead of doing so for *every record*!
 
 ## 5.6.1 - Connecting to Google Cloud Storage
 
+To copy files from my repo to GCS, I opened up a new Terminal and executed the following commands:
+- `gcloud auth login` (to ensure authentication)
+- `gsutil -m cp -r data/pq/ gs://05-batch-spark/data/pq`
+
+Then, we downloaded the Dataproc Cloud Storage Connector by executing the following:
+- `mkdir lib` (making a new directory to store the connector)
+- `gsutil cp gs://hadoop-lib/gcs/gcs-connector-hadoop3-2.2.5.jar gcs-connector-hadoop3-2.2.5.jar`
 
 ## 5.6.2 - Creating a Local Spark Cluster
 
