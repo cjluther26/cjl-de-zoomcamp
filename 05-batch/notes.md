@@ -265,10 +265,101 @@ Then, we downloaded the Dataproc Cloud Storage Connector by executing the follow
 
 ## 5.6.2 - Creating a Local Spark Cluster
 
+[Run Spark in Standalone Mode](https://spark.apache.org/docs/latest/spark-standalone.html)
+
+To find where Spark has been installed, and to execute the bash command provided in the link above to initiate a Spark cluster, I ran the following commands in Terminal:
+- `which spark-submit` (which returned `/opt/homebrew/Cellar/apache-spark/3.5.4/libexec/bin/spark-submit`)
+- `cd /opt/homebrew/Cellar/apache-spark/3.5.4/libexec`
+- `./sbin/start-master.sh`
+This will initiate a Spark cluster at `localhost:8080`!
+
+We then go back to the notebook and start the Spark session. However, we currently have *no workers*, so we can't actually do anything. Thankfully, the guide linked above tells us what to do!
+```
+./sbin/start-worker.sh <master-spark-URL> # In my case, this was ./sbin/start-worker.sh spark://MacBook-Pro.lan:7077
+```
+
+Great! Now let's turn `10_spark_sql_local_cluster.ipynb` into a Python script...
+- Go to the directory that houses the file (in my case, `cjl-de-zoomcamp/05-batch`)
+- `jupyter nbconvert --to=script 10_spark_sql_local_cluster.ipynb`
+- `python 10_spark_sql_local_cluster.py`
+    - I had to make sure `pyspark` was installed and ready to go before doing this
+    - Make sure the application started earlier in this module is killed, otherwise there won't be enough resources available to run this!
+
+We then added args parsing to make it a bit more dynamic...
+Then, I ran this in Terminal:
+```
+python 10_spark_sql_local_cluster.py \
+    --input_green="data/pq/green/2020/*/" \
+    --input_yellow="data/pq/yellow/2020/*/" \
+    --output="data/report-2020"
+```
+    - Note that I had to encase each argument in double-quotes (which the instructor did not have to do!)
+
+We then removed `.master()` from `SparkSession.builder()` and replaced it with `spark-submit` to make this truly run on a local cluster (instead of locally to this specific machine)!
+
+```
+URL="spark://MacBook-Pro.lan:7077"
+spark-submit \
+    --master="${URL}" \
+    10_spark_sql_local_cluster.py \
+        --input_green="data/pq/green/2021/*/" \
+        --input_yellow="data/pq/yellow/2021/*/" \
+        --output="data/report-2021"
+```
+You can also configure workers, resources, etc. 
+Please see Apache Spark's [documentation](https://spark.apache.org/docs/latest/submitting-applications.html) for more information!
+
+Before we end this exercise, we have to ensure we're stopping the master and workers!
+```
+./sbin/stop-worker.sh
+./sbin/stop-master.sh
+```
 
 
 ## 5.6.3 - Setting up a Dataproc Cluster
 
+After creating a cluster in Dataproc, we uploaded our Python script to the GCS bucket we'll point the cluster to. Note that in order to properly submit this Spark job and leverage the configurations available in Dataproc, we have to ensure that the script doesn't specify `.master()`. In this case, we will be using `10_spark_sql_local_cluster.py`, which we created in the last module.
+
+Using `gsutil`: `gsutil cp 10_spark_sql_local_cluster.py gs://05-batch-spark/code/10_spark_sql_local_cluster.py`
+
+Now, for submitting a job:
+- Arguments: 
+    `--input_green=gs://05-batch-spark/data/pq/green/2021/*/`
+    `--input_yellow=gs://05-batch-spark/data/pq/yellow/2021/*/`
+    `--output=gs://05-batch-spark/report-2021`
+    - Note that for this, I had to *remove the double quotes* I had to use in the previous local submission. I'm not sure why...
+
+Instead of using the Google Cloud UI, we can also use the Google Cloud SDK. In the job details from what we've just done, there is an *Equivalent REST Response* feature, which shows us how! (More information on how to do this can be found in Google Cloud [documentation](https://cloud.google.com/dataproc/docs/guides/submit-job#dataproc-submit-job-gcloud), as well).
+
+Using `gcloud`...
+```
+gcloud dataproc jobs submit pyspark \
+    --cluster=de-zoomcamp-cluster \
+    --region=us-east1 \
+    gs://05-batch-spark/code/10_spark_sql_local_cluster.py \
+    -- \
+        --input_green="gs://05-batch-spark/data/pq/green/2020/*/" \
+        --input_yellow="gs://05-batch-spark/data/pq/yellow/2020/*/" \
+        --output="gs://05-batch-spark/report-2020"
+```
+- Now for this one, I needed double quotes for the arguments again...what in the world!?
 
 
 ## 5.6.4 - Connecting Spark to BigQuery
+
+Google Cloud also provides an example on how to connect PySpark to BigQuery [directly](https://cloud.google.com/dataproc/docs/tutorials/bigquery-connector-spark-example#pyspark).
+
+We created a BigQuery-enabled version of the file we've been working with (`10_spark_sql_bigquery.py`) and uploaded it to GCS: `gsutil cp 10_spark_sql_bigquery.py gs://05-batch-spark/code/10_spark_sql_bigquery.py`.
+
+We also reconfigured the `output` argument in our bash command to align with the changes made within `10_spark_sql_bigquery.py` to actually put the final output in a BigQuery table.
+
+```
+gcloud dataproc jobs submit pyspark \
+    --cluster=de-zoomcamp-cluster \
+    --region=us-east1 \
+    gs://05-batch-spark/code/10_spark_sql_bigquery.py \
+    -- \
+        --input_green="gs://05-batch-spark/data/pq/green/2020/*/" \
+        --input_yellow="gs://05-batch-spark/data/pq/yellow/2020/*/" \
+        --output="trips_data_all.reports_2020"
+```
